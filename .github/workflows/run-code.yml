@@ -1,0 +1,60 @@
+name: Run Code
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Python script to run (base64 encoded)'
+        required: true
+        type: string
+      dependencies:
+        description: 'Space-separated pip packages'
+        required: false
+        default: ''
+        type: string
+      python_version:
+        description: 'Python version'
+        required: false
+        default: '3.11'
+        type: string
+      timeout:
+        description: 'Timeout in minutes'
+        required: false
+        default: '30'
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(inputs.timeout) }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Base ML/DL dependencies
+        pip install torch torchvision numpy matplotlib pillow requests pytest scipy pandas
+        # Additional requested dependencies
+        if [ -n "${{ inputs.dependencies }}" ]; then
+          pip install ${{ inputs.dependencies }}
+        fi
+    
+    - name: Decode and run script
+      run: |
+        echo "${{ inputs.script }}" | base64 -d > /tmp/run_script.py
+        echo "=========================================="
+        echo "SCRIPT CONTENT"
+        echo "=========================================="
+        cat /tmp/run_script.py
+        echo ""
+        echo "=========================================="
+        echo "EXECUTION OUTPUT"
+        echo "=========================================="
+        python /tmp/run_script.py
