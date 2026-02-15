@@ -54,6 +54,9 @@ jobs:
     
     - name: Decode and run script
       run: |
+        # Create output directory for artifacts
+        mkdir -p output
+        
         echo "${{ inputs.script }}" | base64 -d > /tmp/run_script.py
         echo "=========================================="
         echo "SCRIPT CONTENT"
@@ -64,3 +67,12 @@ jobs:
         echo "EXECUTION OUTPUT"
         echo "=========================================="
         python /tmp/run_script.py
+    
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: output
+        path: output/
+        if-no-files-found: ignore
+        retention-days: 7
